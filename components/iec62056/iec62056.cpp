@@ -630,7 +630,7 @@ bool IEC62056Component::set_sensor_value_(SENSOR_MAP::iterator &i, const char *v
         *p = '.'; // strtof() expects dot as decimal separator
       }
       float f = strtof(value, nullptr);
-      sen->set_value(f);
+      sen->publish_state(f);
       ESP_LOGD(TAG, "Set sensor '%s' for OBIS '%s'. Value: %f", sen->get_name().c_str(), sen->get_obis().c_str(), f);
     } else {
       ESP_LOGE(TAG, "Cannot convert data to number. Consider using text sensor. Invalid data: '%s'", value);

@@ -1,3 +1,5 @@
+raise Exception("CUSTOM IEC62056 BRANCH LOADED")
+
 import re
 import esphome.codegen as cg
 import esphome.config_validation as cv

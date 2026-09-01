@@ -354,15 +354,15 @@ void IEC62056Component::loop() {
             set_sensor_value_(it, val1.c_str(), val2.c_str());
           }
 
-          // Publish every received frame immediately to text sensors configured
-          // with OBIS "*". This allows dynamic processing of previously unknown
-          // OBIS codes and increasing archive indexes such as *5, *6, and *7.
-          auto wildcard_range = sensors_.equal_range("*");
-          for (auto it = wildcard_range.first; it != wildcard_range.second; ++it) {
+          // "F.F.F" is a reserved capture-all OBIS used by this fork.
+          // It passes the standard ESPHome OBIS validator, so no Python
+          // component changes are required.
+          auto capture_all_range = sensors_.equal_range("F.F.F");
+          for (auto it = capture_all_range.first; it != capture_all_range.second; ++it) {
             IEC62056SensorBase *sensor = it->second;
 
             if (sensor->get_type() != TEXT_SENSOR) {
-              ESP_LOGW(TAG, "Wildcard OBIS '*' is supported only for text sensors.");
+              ESP_LOGW(TAG, "Capture-all OBIS 'F.F.F' is supported only for text sensors.");
               continue;
             }
 
@@ -569,15 +569,15 @@ void IEC62056Component::loop() {
             set_sensor_value_(it, val1.c_str(), val2.c_str());
           }
 
-          // Publish every received frame immediately to text sensors configured
-          // with OBIS "*". This allows dynamic processing of previously unknown
-          // OBIS codes and increasing archive indexes such as *5, *6, and *7.
-          auto wildcard_range = sensors_.equal_range("*");
-          for (auto it = wildcard_range.first; it != wildcard_range.second; ++it) {
+          // "F.F.F" is a reserved capture-all OBIS used by this fork.
+          // It passes the standard ESPHome OBIS validator, so no Python
+          // component changes are required.
+          auto capture_all_range = sensors_.equal_range("F.F.F");
+          for (auto it = capture_all_range.first; it != capture_all_range.second; ++it) {
             IEC62056SensorBase *sensor = it->second;
 
             if (sensor->get_type() != TEXT_SENSOR) {
-              ESP_LOGW(TAG, "Wildcard OBIS '*' is supported only for text sensors.");
+              ESP_LOGW(TAG, "Capture-all OBIS 'F.F.F' is supported only for text sensors.");
               continue;
             }
 
@@ -688,9 +688,8 @@ void IEC62056Component::verify_all_sensors_got_value_() {
   for (const auto &item : sensors_) {
     IEC62056SensorBase *s = item.second;
 
-    // Wildcard text sensors are published immediately for every received frame
-    // and reset afterwards, so they must not be checked at the end of readout.
-    if (s->get_obis() == "*") {
+    // Capture-all sensors are published and reset for every received frame.
+    if (s->get_obis() == "F.F.F") {
       continue;
     }
 

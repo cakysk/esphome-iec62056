@@ -348,10 +348,28 @@ void IEC62056Component::loop() {
             break;
           }
 
-          // Update all matching sensors
+          // Update all sensors matching the exact OBIS code.
           auto range = sensors_.equal_range(obis);
           for (auto it = range.first; it != range.second; ++it) {
             set_sensor_value_(it, val1.c_str(), val2.c_str());
+          }
+
+          // Publish every received frame immediately to text sensors configured
+          // with OBIS "*". This allows dynamic processing of previously unknown
+          // OBIS codes and increasing archive indexes such as *5, *6, and *7.
+          auto wildcard_range = sensors_.equal_range("*");
+          for (auto it = wildcard_range.first; it != wildcard_range.second; ++it) {
+            IEC62056SensorBase *sensor = it->second;
+
+            if (sensor->get_type() != TEXT_SENSOR) {
+              ESP_LOGW(TAG, "Wildcard OBIS '*' is supported only for text sensors.");
+              continue;
+            }
+
+            if (set_sensor_value_(it, val1.c_str(), val2.c_str())) {
+              sensor->publish();
+              sensor->reset();
+            }
           }
         }
       }
@@ -545,10 +563,28 @@ void IEC62056Component::loop() {
             break;
           }
 
-          // Update all matching sensors
+          // Update all sensors matching the exact OBIS code.
           auto range = sensors_.equal_range(obis);
           for (auto it = range.first; it != range.second; ++it) {
             set_sensor_value_(it, val1.c_str(), val2.c_str());
+          }
+
+          // Publish every received frame immediately to text sensors configured
+          // with OBIS "*". This allows dynamic processing of previously unknown
+          // OBIS codes and increasing archive indexes such as *5, *6, and *7.
+          auto wildcard_range = sensors_.equal_range("*");
+          for (auto it = wildcard_range.first; it != wildcard_range.second; ++it) {
+            IEC62056SensorBase *sensor = it->second;
+
+            if (sensor->get_type() != TEXT_SENSOR) {
+              ESP_LOGW(TAG, "Wildcard OBIS '*' is supported only for text sensors.");
+              continue;
+            }
+
+            if (set_sensor_value_(it, val1.c_str(), val2.c_str())) {
+              sensor->publish();
+              sensor->reset();
+            }
           }
         }
       }
@@ -651,6 +687,13 @@ void IEC62056Component::reset_all_sensors_() {
 void IEC62056Component::verify_all_sensors_got_value_() {
   for (const auto &item : sensors_) {
     IEC62056SensorBase *s = item.second;
+
+    // Wildcard text sensors are published immediately for every received frame
+    // and reset afterwards, so they must not be checked at the end of readout.
+    if (s->get_obis() == "*") {
+      continue;
+    }
+
     if (!s->has_value()) {
       ESP_LOGE(TAG,
                "Not all sensors received data from the meter. The first one: OBIS '%s'. Verify sensor is defined with "

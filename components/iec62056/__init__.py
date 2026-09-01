@@ -38,6 +38,10 @@ Iec62056OWaitNextReadoutTrigger = iec62056_ns.class_(
 )
 
 def validate_obis(value):
+    # A single asterisk is a special wildcard accepted for text sensors.
+    if value == "*":
+        return value
+
     # match, e.g.
     # F.35.90*00
     # F.35
